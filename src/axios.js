@@ -4,6 +4,7 @@ import { getToken } from '~/composables/auth.js';
 import * as constants from '~/constants';
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL;
+console.log("axios.js apiBaseURL: ", apiBaseURL)
 const service = axios.create({
 	baseURL: apiBaseURL + '/api',
 	headers: {
