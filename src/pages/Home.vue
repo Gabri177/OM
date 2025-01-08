@@ -224,10 +224,6 @@ function initializeRemainingDays() {
 
 initializeRemainingDays();
 
-
-const dateRange = ref([]);
-
-
 const filteredTableData = computed(() => {
 	// 如果没有搜索关键字，返回全部数据
 	if (!searchInput.value) return tableData;
@@ -316,7 +312,7 @@ const handleEdit = (row) => {
 	newUser.password = ''
 	newUser.confirmPassword = ''
 	selectedRow.value = row;
-	dateRange.value = [new Date(row.date), new Date(row.expireDate)];
+	dateRef.value = new Date(row.expireDate)
 	editDialog.value.openDialog()
 }
 
