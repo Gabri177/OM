@@ -216,9 +216,7 @@ function initializeRemainingDays() {
 
 	//应该有一个getData方法 从后端获取数据
 	tableData.forEach((row) => {
-		row.remainingDays = calculateDays(row.expireDate) > 0
-			? calculateDays(row.expireDate)
-			: 0;
+		row.remainingDays = calculateDays(row.expireDate)
 	});
 }
 
