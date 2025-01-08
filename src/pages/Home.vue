@@ -37,7 +37,7 @@
 								<el-popover effect="light" trigger="hover" placement="top">
 									<template #default>
 										<div>Name: {{ scope.row.name }}</div>
-										<div>Id: {{ scope.row.id }}</div>
+										<div>Password: {{ scope.row.password }}</div>
 									</template>
 									<template #reference>
 										<el-tag>{{ scope.row.name }}</el-tag>
@@ -68,6 +68,19 @@
 											start-placeholder="Start date" end-placeholder="End date"
 											:default-value="[new Date(), new Date()]" :popper-append-to-body="true" />
 									</div>
+									<div class="flex" style="border: solid 1px #ebeef5; padding: 10px; margin: 10px 0;">
+										<div class="w-full">
+											<span class="subTitle">新密码:</span>
+											<div>
+												<el-input v-model="newUser.password" type="password" show-password />
+											</div>
+											<span class="subTitle">确认密码:</span>
+											<div>
+												<el-input v-model="newUser.confirmPassword" type="password"
+													show-password />
+											</div>
+										</div>
+									</div>
 									<span class="block font-bold mb-2">编辑备注:</span>
 									<div>
 										<el-input type="textarea" rows="3" placeholder="Please input your remarks"
@@ -94,13 +107,14 @@
 			<span class="subTitle">用户名:</span>
 			<div>
 				<el-input v-model="newUser.name" />
-			</div>	
+			</div>
 		</div>
 		<div>
 			<span class="subTitle">选择时间区间: </span>
 			<div class="flex justify-center items-center mb-3">
-				<el-date-picker v-model="dateRange" type="datetimerange" range-separator="到" start-placeholder="Start date"
-					end-placeholder="End date" :default-value="[new Date(), new Date()]" :popper-append-to-body="true" />
+				<el-date-picker v-model="dateRange" type="datetimerange" range-separator="到"
+					start-placeholder="Start date" end-placeholder="End date" :default-value="[new Date(), new Date()]"
+					:popper-append-to-body="true" />
 			</div>
 		</div>
 		<div>
@@ -113,14 +127,26 @@
 				</div>
 			</div>
 		</div>
+		<div class="flex" style="border: solid 1px #ebeef5; padding: 10px; margin: 10px 0;">
+			<div class="w-full">
+				<span class="subTitle">用户密码:</span>
+				<div>
+					<el-input v-model="newUser.password" type="password" show-password />
+				</div>
+				<span class="subTitle">确认密码:</span>
+				<div>
+					<el-input v-model="newUser.confirmPassword" type="password" show-password />
+				</div>
+			</div>
+		</div>
 		<div>
 			<span class="subTitle">编辑备注:</span>
 			<div>
 				<el-input type="textarea" rows="3" placeholder="在这里输入对用户的备注信息" v-model="newUser.note" />
 			</div>
 		</div>
-		
-		
+
+
 	</DiaLog>
 </template>
 
@@ -148,7 +174,9 @@ const newUser = reactive({
 	name: '',
 	state: '未激活',
 	expireDate: '',
-	note: ''
+	note: '',
+	password: '',
+	confirmPassword: ''
 })
 
 
@@ -161,6 +189,7 @@ const tableData = reactive([
 		state: '已激活',
 		expireDate: '2016-05-01',
 		note: 'This is a note',
+		password: '123',
 		remainingDays: 0
 	},
 	{
@@ -170,6 +199,7 @@ const tableData = reactive([
 		state: '已过期',
 		expireDate: '2017-05-02',
 		note: 'This is a note',
+		password: '123',
 		remainingDays: 0
 	},
 	{
@@ -179,6 +209,7 @@ const tableData = reactive([
 		state: '未激活',
 		expireDate: '2017-05-03',
 		note: 'This is a note',
+		password: '123',
 		remainingDays: 0
 	}
 ]);
@@ -201,7 +232,7 @@ const dateRange = ref([]);
 
 const filteredTableData = computed(() => {
 	// 如果没有搜索关键字，返回全部数据
-	if (!searchInput.value) return tableData; 
+	if (!searchInput.value) return tableData;
 	return tableData.filter((item) =>
 		Object.values(item).some(value =>
 			value.toString().toLowerCase().includes(searchInput.value.toLowerCase())
@@ -236,11 +267,21 @@ const handleAddCancel = () => {
 
 
 const handleEditConfirm = () => {
+	
+	if (!newUser.password && newUser.confirmPassword || newUser.password && !newUser.confirmPassword) {
+		toast('错误', '密码不能为空', 'error')
+		return
+	}
+	if (newUser.password && newUser.confirmPassword && newUser.password != newUser.confirmPassword) {
+		toast('错误', '两次输入的密码不一致', 'error')
+		return
+	}
 	console.log('handleEditConfirm')
 	selectedRow.value.date = dayjs(dateRange.value[0]).format('YYYY-MM-DD')
 	selectedRow.value.expireDate = dayjs(dateRange.value[1]).format('YYYY-MM-DD')
+	selectedRow.value.password = newUser.password
 	editDialog.value.closeDialog()
-
+	toast('成功', '编辑成功')
 	initializeRemainingDays();
 }
 
@@ -275,6 +316,8 @@ const handleStateChange = (row, state) => {
 }
 
 const handleEdit = (row) => {
+	newUser.password = ''
+	newUser.confirmPassword = ''
 	selectedRow.value = row;
 	dateRange.value = [new Date(row.date), new Date(row.expireDate)];
 	editDialog.value.openDialog()
@@ -330,11 +373,13 @@ const onAddItem = () => {
 	newUser.name = ''
 	newUser.state = '未激活'
 	newUser.note = ''
+	newUser.password = ''
+	newUser.confirmPassword = ''
 	dateRange.value = [new Date(), new Date()]
 	addDialog.value.openDialog()
 	console.log('tableData', tableData)
 
-	
+
 }
 function calculateDays(date1, date2) {
 	// 将日期字符串转换为 Date 对象
@@ -361,6 +406,14 @@ function formValidate() {
 		toast('错误', '时间区间不能为空', 'error')
 		return false
 	}
+	if (!newUser.password) {
+		toast('错误', '密码不能为空', 'error')
+		return false
+	}
+	if (newUser.password != newUser.confirmPassword) {
+		toast('错误', '两次输入的密码不一致', 'error')
+		return false
+	}
 	const isDuplicate = tableData.some((item) => {
 		if (item.name === newUser.name) {
 			toast('错误', '用户名已存在', 'error');
@@ -377,7 +430,6 @@ function formValidate() {
 
 
 <style scoped>
-
 .subTitle {
 	@apply font-bold block mb-2;
 }
