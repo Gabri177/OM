@@ -33,7 +33,9 @@
   </template>
   
   <script setup>
-  import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
+	import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
+	import { popOut } from '~/composables/util'
+
   
   // 接收父组件的初始状态
   const props = defineProps({
@@ -76,10 +78,16 @@
   
   // 切换状态
   const changeStatus = (status) => {
-	emit("change", status.label);
-	currentStatus.value = status.label;
-	tagType.value = status.type;
-	showCard.value = false;
+	popOut('提示', '你确定要切换状态吗？', '确认', '取消')
+	.then(() => {
+		emit("change", status.label);
+		currentStatus.value = status.label;
+		tagType.value = status.type;
+		showCard.value = false;
+	})
+	.catch(() => {
+		showCard.value = false;
+	})
   };
   
   // 点击外部关闭卡片
