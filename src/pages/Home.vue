@@ -31,7 +31,7 @@
 			<el-main class="fixed top-[64px] w-full max-h-[calc(100% - 64px)]]">
 				<div>
 					<el-table :data="filteredTableData" style="width: 100%; height: calc(100vh - 144px)">
-						<el-table-column fixed prop="date" label="Activation date" width="150" sortable />
+						<el-table-column fixed prop="activeDate" label="Activation date" width="150" sortable />
 						<el-table-column label="User Name" width="180">
 							<template #default="scope">
 								<el-popover effect="light" trigger="hover" placement="top">
@@ -62,11 +62,10 @@
 								</el-button>
 								<DiaLog ref="editDialog" title="编辑" @confirm="handleEditConfirm"
 									@cancel="handleEditCancel" @delete="handleEditDelete">
-									<span class="font-bold block mb-3">选择时间区间: </span>
-									<div class="flex justify-center items-center mb-3">
-										<el-date-picker v-model="dateRange" type="datetimerange" range-separator="到"
-											start-placeholder="Start date" end-placeholder="End date"
-											:default-value="[new Date(), new Date()]" :popper-append-to-body="true" />
+									<span class="font-bold block mb-3">选择到期时间: </span>
+									<div class="flex items-center mb-3">
+										<el-date-picker v-model="dateRef" type="date" placeholder="请选择到期时间"
+											size="default" />
 									</div>
 									<div class="flex" style="border: solid 1px #ebeef5; padding: 10px; margin: 10px 0;">
 										<div class="w-full">
@@ -110,11 +109,9 @@
 			</div>
 		</div>
 		<div>
-			<span class="subTitle">选择时间区间: </span>
-			<div class="flex justify-center items-center mb-3">
-				<el-date-picker v-model="dateRange" type="datetimerange" range-separator="到"
-					start-placeholder="Start date" end-placeholder="End date" :default-value="[new Date(), new Date()]"
-					:popper-append-to-body="true" />
+			<span class="subTitle">选择到期时间: </span>
+			<div class="flex items-center mb-3">
+				<el-date-picker v-model="dateRef" type="date" placeholder="请选择到期时间" size="default" />
 			</div>
 		</div>
 		<div>
@@ -168,9 +165,10 @@ const editDialog = ref(null)
 const addDialog = ref(null)
 const selectedRow = ref(null);
 const router = useRouter()
+const dateRef = ref(new Date())
 
 const newUser = reactive({
-	date: '',
+	activeDate: '',
 	name: '',
 	state: '未激活',
 	expireDate: '',
@@ -184,7 +182,7 @@ const newUser = reactive({
 const tableData = reactive([
 	{
 		id: 1,
-		date: '2016-05-03',
+		activeDate: '2016-05-03',
 		name: 'Tom1',
 		state: '已激活',
 		expireDate: '2016-05-01',
@@ -194,7 +192,7 @@ const tableData = reactive([
 	},
 	{
 		id: 2,
-		date: '2016-05-02',
+		activeDate: '2016-05-02',
 		name: 'Tom2',
 		state: '已过期',
 		expireDate: '2017-05-02',
@@ -204,7 +202,7 @@ const tableData = reactive([
 	},
 	{
 		id: 3,
-		date: '2016-05-04',
+		activeDate: '2016-05-04',
 		name: 'Tom3',
 		state: '未激活',
 		expireDate: '2017-05-03',
@@ -218,8 +216,8 @@ function initializeRemainingDays() {
 
 	//应该有一个getData方法 从后端获取数据
 	tableData.forEach((row) => {
-		row.remainingDays = calculateDays(row.date, row.expireDate) > 0
-			? calculateDays(row.date, row.expireDate)
+		row.remainingDays = calculateDays(row.expireDate) > 0
+			? calculateDays(row.expireDate)
 			: 0;
 	});
 }
@@ -243,15 +241,15 @@ const filteredTableData = computed(() => {
 const handleAddConfirm = () => {
 
 	if (!formValidate()) return
-	newUser.date = dayjs(dateRange.value[0]).format('YYYY-MM-DD')
-	newUser.expireDate = dayjs(dateRange.value[1]).format('YYYY-MM-DD')
+	newUser.date = dayjs(Date()).format('YYYY-MM-DD')
+	newUser.expireDate = dayjs(dateRef.value).format('YYYY-MM-DD')
 	tableData.push({
-		date: newUser.date,
+		activeDate: newUser.date,
 		name: newUser.name,
 		state: newUser.state,
 		expireDate: newUser.expireDate,
 		note: newUser.note,
-		remainingDays: calculateDays(newUser.date, newUser.expireDate)
+		remainingDays: calculateDays(newUser.expireDate)
 	})
 	addDialog.value.closeDialog()
 
@@ -267,7 +265,7 @@ const handleAddCancel = () => {
 
 
 const handleEditConfirm = () => {
-	
+
 	if (!newUser.password && newUser.confirmPassword || newUser.password && !newUser.confirmPassword) {
 		toast('错误', '密码不能为空', 'error')
 		return
@@ -277,8 +275,7 @@ const handleEditConfirm = () => {
 		return
 	}
 	console.log('handleEditConfirm')
-	selectedRow.value.date = dayjs(dateRange.value[0]).format('YYYY-MM-DD')
-	selectedRow.value.expireDate = dayjs(dateRange.value[1]).format('YYYY-MM-DD')
+	selectedRow.value.expireDate = dayjs(dateRef.value).format('YYYY-MM-DD')
 	selectedRow.value.password = newUser.password
 	editDialog.value.closeDialog()
 	toast('成功', '编辑成功')
@@ -375,23 +372,20 @@ const onAddItem = () => {
 	newUser.note = ''
 	newUser.password = ''
 	newUser.confirmPassword = ''
-	dateRange.value = [new Date(), new Date()]
+	dateRef.value = new Date()
 	addDialog.value.openDialog()
 	console.log('tableData', tableData)
 
 
 }
-function calculateDays(date1, date2) {
-	// 将日期字符串转换为 Date 对象
-	const startDate = new Date(date1);
-	const endDate = new Date(date2);
+function calculateDays(date) {
+	const startDate = new Date();
+	const endDate = new Date(date);
 
-	// 获取两个日期的时间戳
 	const startTime = startDate.getTime();
 	const endTime = endDate.getTime();
 
-	// 计算时间差（毫秒），然后转换为天数
-	const diffTime = endTime - startTime; // 使用绝对值防止负数
+	const diffTime = endTime - startTime;
 	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
 	return diffDays;
@@ -402,7 +396,7 @@ function formValidate() {
 		toast('错误', '用户名不能为空', 'error')
 		return false
 	}
-	if (!dateRange.value[0] || !dateRange.value[1]) {
+	if (dateRef.value === null) {
 		toast('错误', '时间区间不能为空', 'error')
 		return false
 	}

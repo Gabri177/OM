@@ -52,12 +52,13 @@
 					</div>
 
 					<div>
-						<button
-							type="submit"
+						<el-button
+							v-loading="loading"
+							@click="handleLogin"
 							class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 active:bg-indigo-700"
 						>
 							登录
-						</button>
+						</el-button>
 					</div>
 				</form>
 			</div>
@@ -76,6 +77,7 @@ const username = ref('');
 const password = ref('');
 const errors = ref({});
 const router = useRouter();
+const loading = ref(false);
 
 const validateField = (field) => {
 	if (field === 'username') {
@@ -102,6 +104,7 @@ const handleLogin = () => {
 	// 检查是否有错误
 	if (!errors.value.username && !errors.value.password) {
 
+		loading.value = true;
 		login({
 			username: username.value,
 			password: password.value
@@ -114,7 +117,11 @@ const handleLogin = () => {
 			router.push('/home');
 		})
 		.catch((err) => {
+			toast('错误', '登录失败', 'error');
 			console.log('登录失败');
+		})
+		.finally(() => {
+			loading.value = false;
 		});
 		
 	} else {

@@ -1,6 +1,6 @@
 <template>
 	<Teleport to="body">
-		<el-dialog v-model="centerDialogVisible" :title="title" :width="width" style="max-height: 500px; overflow-y: auto; " align-center>
+		<el-dialog v-model="centerDialogVisible" :title="title" :width="width" style="max-height: 500px; overflow-y: auto; overflow-x: hidden; " align-center>
 			<slot></slot>
 			<template #footer>
 				<div class="flex justify-between items-center">
@@ -58,7 +58,7 @@ defineProps({
 	},
 	width: {
 		type: Number,
-		default: 500
+		default: 490
 	},
 	isVisibleDelete: {
 		type: Boolean,
