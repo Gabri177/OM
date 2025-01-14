@@ -120,7 +120,7 @@
 				<div class="flex items-center">
 					<el-radio v-model="newUser.state" label="未激活">未激活</el-radio>
 					<el-radio v-model="newUser.state" label="已激活">已激活</el-radio>
-					<el-radio v-model="newUser.state" label="已过期">已过期</el-radio>
+					<!-- <el-radio v-model="newUser.state" label="已过期">已过期</el-radio> -->
 				</div>
 			</div>
 		</div>
@@ -158,6 +158,9 @@ import { ElButton } from 'element-plus'
 import { toast, popOut } from '~/composables/util'
 import { logout } from '~/api/auth'
 import { useRouter } from 'vue-router'
+import { addTenant, banTenant, getTenants, expandTenant } from '~/api/tenants'
+import { removeToken } from '~/composables/auth'
+
 
 const now = new Date()
 const searchInput = ref('')
@@ -166,6 +169,7 @@ const addDialog = ref(null)
 const selectedRow = ref(null);
 const router = useRouter()
 const dateRef = ref(new Date())
+const tableData = reactive([])
 
 const newUser = reactive({
 	activeDate: '',
@@ -178,8 +182,35 @@ const newUser = reactive({
 })
 
 
+const getData = () => {
+	getTenants()
+		.then((res) => {
+			const datas = res.datas
+			tableData.splice(0, tableData.length)
+			for (const data of datas) {
+				tableData.push({
+					activeDate: dayjs(data.create).format('YYYY-MM-DD'),
+					name: data.userName,
+					state: data.isEnable ? '已激活' : '未激活',
+					expireDate: dayjs(data.expire).format('YYYY-MM-DD'),
+					note: 'This is a note',
+					password: data.password,
+					remainingDays: data.daysOfExpire,
+					id: data.tenantId,
+					customerAccountCount: data.customerAccountCount
+				})
+			}
+			console.log('tableData', tableData)
+		})
+		.catch((error) => {
+			toast('错误', '获取数据失败, 请重新刷新页面', 'error')
+		})
+}
 
-const tableData = reactive([
+getData()
+
+
+const tableData2 = reactive([
 	{
 		id: 1,
 		activeDate: '2016-05-03',
@@ -194,7 +225,7 @@ const tableData = reactive([
 		id: 2,
 		activeDate: '2016-05-02',
 		name: 'Tom2',
-		state: '已过期',
+		state: '未激活',
 		expireDate: '2017-05-02',
 		note: 'This is a note',
 		password: '123',
@@ -212,15 +243,15 @@ const tableData = reactive([
 	}
 ]);
 
-function initializeRemainingDays() {
+// function initializeRemainingDays() {
 
-	//应该有一个getData方法 从后端获取数据
-	tableData.forEach((row) => {
-		row.remainingDays = calculateDays(row.expireDate)
-	});
-}
+// 	//应该有一个getData方法 从后端获取数据
+// 	tableData.forEach((row) => {
+// 		row.remainingDays = calculateDays(row.expireDate)
+// 	});
+// }
 
-initializeRemainingDays();
+// initializeRemainingDays();
 
 const filteredTableData = computed(() => {
 	// 如果没有搜索关键字，返回全部数据
@@ -235,19 +266,29 @@ const filteredTableData = computed(() => {
 const handleAddConfirm = () => {
 
 	if (!formValidate()) return
-	newUser.date = dayjs(Date()).format('YYYY-MM-DD')
-	newUser.expireDate = dayjs(dateRef.value).format('YYYY-MM-DD')
-	tableData.push({
-		activeDate: newUser.date,
-		name: newUser.name,
-		state: newUser.state,
-		expireDate: newUser.expireDate,
-		note: newUser.note,
-		remainingDays: calculateDays(newUser.expireDate)
+	const daysOfExpire = calculateDays(dayjs(dateRef.value).format('YYYY-MM-DD'))
+	// 应该添加填写email的input框
+	const email = 'abcd@gmail.com'
+	const isEnable = newUser.state === '已激活' ? true : false
+
+	addTenant({
+		username: newUser.name,
+		password: newUser.password,
+		daysOfExpire: daysOfExpire,
+		email: email,
+		isenable: isEnable
+	})
+	.then(() => {
+		toast('成功', '添加成功')
+		getData()
+	})
+	.catch((error) => {
+		console.log('error', error)
+		toast('错误', '添加失败', 'error')
 	})
 	addDialog.value.closeDialog()
 
-	initializeRemainingDays();
+	// initializeRemainingDays();
 }
 
 const handleAddCancel = () => {
@@ -268,12 +309,33 @@ const handleEditConfirm = () => {
 		toast('错误', '两次输入的密码不一致', 'error')
 		return
 	}
-	console.log('handleEditConfirm')
-	selectedRow.value.expireDate = dayjs(dateRef.value).format('YYYY-MM-DD')
+	// console.log('row: ', row)
+	// console.log('handleEditConfirm')
+	// console.log('rowId: ', row.id)
+	// console.log('newExpie: ', dayjs(dateRef.value).format('YYYY-MM-DD'))
+	
+	expandTenant({
+		tenantId: selectedRow.value.id,
+		NewExpire: dayjs(dateRef.value).format('YYYY-MM-DD')
+	})
+	.then(() => {
+		toast('成功', '修改成功')
+		getData()
+		editDialog.value.closeDialog()
+		toast('成功', '编辑成功')
+	
+	})
+	.catch((error) => {
+		console.log('error', error)
+		getData()
+		toast('错误', '修改失败', 'error')
+		editDialog.value.closeDialog()
+		
+
+	})
+	//修改密码的api?? 
 	selectedRow.value.password = newUser.password
-	editDialog.value.closeDialog()
-	toast('成功', '编辑成功')
-	initializeRemainingDays();
+
 }
 
 const handleEditCancel = () => {
@@ -301,8 +363,21 @@ const handleEditDelete = () => {
 		})
 }
 
-const handleStateChange = (row, state) => {
-	row.state = state
+const handleStateChange = (row, data) => {
+	const {before, after} = data
+	const isEnable = after == '已激活' ? true : false
+	if (!isEnable){
+		banTenant(row.id)
+		.then(() => {
+			toast('成功', '禁用成功')
+			getData()
+		})
+		.catch((error) => {
+			toast('错误', '禁用失败', 'error')
+			getData()
+		})
+	}
+	getData()
 	console.log('newtableData', tableData)
 }
 
@@ -310,6 +385,7 @@ const handleEdit = (row) => {
 	newUser.password = ''
 	newUser.confirmPassword = ''
 	selectedRow.value = row;
+	console.log('selectedRow', selectedRow.value)
 	dateRef.value = new Date(row.expireDate)
 	editDialog.value.openDialog()
 }
@@ -330,12 +406,17 @@ const handleCommand = (command) => {
 					logout()
 						.then(() => {
 							toast('成功', '退出登录成功')
+							removeToken()
 							router.push({ path: '/' })
 
 						})
 						.catch((error) => {
 							console.log('error', error)
-							toast('错误', '退出登录失败', 'error')
+							removeToken()
+							router.push({ path: '/' })
+							toast('成功', '退出登录成功.')
+
+							//toast('错误', '退出登录失败', 'error')
 						})
 				})
 				.catch((error) => {

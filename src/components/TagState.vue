@@ -46,17 +46,18 @@
   });
   
   // 状态列表
+  //{ label: "已过期", color: "red", type: "danger" },
   const statuses = [
 	{ label: "已激活", color: "green", type: "success" },
-	{ label: "未激活", color: "blue", type: "info" },
-	{ label: "已过期", color: "red", type: "danger" },
+	{ label: "未激活", color: "blue", type: "info" }
   ];
   
   // 当前状态
-  const currentStatus = ref(props.initialState); // 初始化为父组件传递的状态
-  const tagType = ref(
-	statuses.find((status) => status.label === props.initialState)?.type || "info"
-  );
+	const currentStatus = computed(() => props.initialState);
+	const tagType = computed(() => {
+	return statuses.find((status) => status.label === props.initialState)?.type || "info";
+	});
+
   
   // 卡片控制
   const showCard = ref(false);
@@ -80,7 +81,7 @@
   const changeStatus = (status) => {
 	popOut('提示', '你确定要切换状态吗？', '确认', '取消')
 	.then(() => {
-		emit("change", status.label);
+		emit("change", {before: currentStatus.value , after: status.label});
 		currentStatus.value = status.label;
 		tagType.value = status.type;
 		showCard.value = false;
@@ -101,13 +102,14 @@
   
   // 监听初始状态变化（可选，如果父组件动态更新初始状态）
   watch(
-	() => props.initialState,
-	(newVal) => {
-	  currentStatus.value = newVal;
-	  tagType.value =
-		statuses.find((status) => status.label === newVal)?.type || "info";
-	}
-  );
+  () => props.initialState,
+  (newVal) => {
+    currentStatus.value = newVal;
+    tagType.value = statuses.find((status) => status.label === newVal)?.type || "info";
+  },
+  { immediate: true } // 确保初始化时也会触发
+);
+
   
   // 生命周期钩子
   onMounted(() => {
