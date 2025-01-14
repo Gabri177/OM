@@ -18,7 +18,7 @@ router.beforeEach(async (to, from, next) => {
 	//防止重复登录
 	if (token && to.path == '/') {
 		toast('警告', '您已经登录', 'warning')
-		return next({path: from.path ? from.path : '/'})
+		return next({ path: '/home' })
 	}
 
 	// 设置页面标题
