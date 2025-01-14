@@ -36,8 +36,10 @@
 							<template #default="scope">
 								<el-popover effect="light" trigger="hover" placement="top">
 									<template #default>
-										<div>Name: {{ scope.row.name }}</div>
-										<div>Password: {{ scope.row.password }}</div>
+										<div>
+											<div>Name: <span class="text-blue-400">{{ scope.row.name }}</span></div>
+											<div>Password: <span class="text-blue-400">{{ scope.row.password }}</span></div>
+										</div>
 									</template>
 									<template #reference>
 										<el-tag>{{ scope.row.name }}</el-tag>
@@ -67,6 +69,7 @@
 										<el-date-picker v-model="dateRef" type="date" placeholder="请选择到期时间"
 											size="default" />
 									</div>
+									
 									<div class="flex" style="border: solid 1px #ebeef5; padding: 10px; margin: 10px 0;">
 										<div class="w-full">
 											<span class="subTitle">新密码:</span>
@@ -80,6 +83,7 @@
 											</div>
 										</div>
 									</div>
+									
 									
 								</DiaLog>
 							</template>
@@ -132,14 +136,6 @@
 				</div>
 			</div>
 		</div>
-		<div>
-			<span class="subTitle">编辑备注:</span>
-			<div>
-				<el-input type="textarea" rows="3" placeholder="在这里输入对用户的备注信息" v-model="newUser.note" />
-			</div>
-		</div>
-
-
 	</DiaLog>
 </template>
 
@@ -191,7 +187,7 @@ const getData = () => {
 					password: data.password,
 					remainingDays: data.daysOfExpire,
 					id: data.tenantId,
-					customerAccountCount: data.customerAccountCount
+					customerAccountCount: data.customerAccountCount,
 				})
 			}
 			console.log('tableData', tableData)
@@ -220,17 +216,16 @@ const filteredTableData = computed(() => {
 const handleAddConfirm = () => {
 
 	if (!formValidate()) return
-	const daysOfExpire = calculateDays(dayjs(dateRef.value).format('YYYY-MM-DD'))
 	// 应该添加填写email的input框
 	const email = 'abcd@gmail.com'
 	const isEnable = newUser.state === '已激活' ? true : false
 
 	addTenant({
-		username: newUser.name,
-		password: newUser.password,
-		daysOfExpire: daysOfExpire,
-		email: email,
-		isenable: isEnable
+		UserName: newUser.name,
+		Password: newUser.password,
+		Expire: dayjs(dateRef.value).format('YYYY-MM-DD'),
+		isenable: isEnable,
+		Email: email
 	})
 	.then(() => {
 		toast('成功', '添加成功')
