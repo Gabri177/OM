@@ -23,9 +23,6 @@ router.beforeEach(async (to, from, next) => {
 
 	// 设置页面标题
 	let title = 'PandaStore'
-	if (typeof to.meta.title === 'function') {
-		title = to.meta.title()
-	}
 	document.title = title
 
 	next()
