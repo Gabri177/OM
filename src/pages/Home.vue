@@ -118,8 +118,8 @@
 			<span class="subTitle">选择激活状态:</span>
 			<div class="flex mx-2">
 				<div class="flex items-center">
-					<el-radio v-model="newUser.state" label="未激活">未激活</el-radio>
-					<el-radio v-model="newUser.state" label="已激活">已激活</el-radio>
+					<el-radio v-model="newUser.state" label="未启用">未启用</el-radio>
+					<el-radio v-model="newUser.state" label="启用">启用</el-radio>
 					<!-- <el-radio v-model="newUser.state" label="已过期">已过期</el-radio> -->
 				</div>
 			</div>
@@ -166,7 +166,7 @@ const tableData = reactive([])
 const newUser = reactive({
 	activeDate: '',
 	name: '',
-	state: '未激活',
+	state: '未启用',
 	expireDate: '',
 	password: '',
 	confirmPassword: ''
@@ -182,7 +182,7 @@ const getData = () => {
 				tableData.push({
 					activeDate: dayjs(data.create).format('YYYY-MM-DD'),
 					name: data.userName,
-					state: data.isEnable ? '已激活' : '未激活',
+					state: data.isEnable ? '启用' : '未启用',
 					expireDate: dayjs(data.expire).format('YYYY-MM-DD'),
 					password: data.password,
 					remainingDays: data.daysOfExpire,
@@ -218,7 +218,7 @@ const handleAddConfirm = () => {
 	if (!formValidate()) return
 	// 应该添加填写email的input框
 	const email = 'abcd@gmail.com'
-	const isEnable = newUser.state === '已激活' ? true : false
+	const isEnable = newUser.state === '启用' ? true : false
 
 	addTenant({
 		UserName: newUser.name,
@@ -265,7 +265,7 @@ const handleEditConfirm = () => {
 	
 	updateTenant({
 		TenantId: selectedRow.value.id,
-		IsEnable: selectedRow.value.state === '已激活' ? true : false,
+		IsEnable: selectedRow.value.state === '启用' ? true : false,
 		Password: newUser.password == '' ? selectedRow.value.password : newUser.password,
 		Expire: dayjs(dateRef.value).format('YYYY-MM-DD')
 	})
@@ -316,7 +316,7 @@ const handleEditDelete = () => {
 
 const handleStateChange = (row, data) => {
 	const {before, after} = data
-	const isEnable = after == '已激活' ? true : false
+	const isEnable = after == '启用' ? true : false
 
 	updateTenant({
 		tenantId: row.id,
@@ -392,13 +392,13 @@ const onAddItem = () => {
 	// tableData.push({
 	// 	date: dayjs(now).format('YYYY-MM-DD'),
 	// 	name: now.getTime(),
-	// 	state: '已激活',
+	// 	state: '启用',
 	// 	expireDate: dayjs(now).format('YYYY-MM-DD'),
 	// 	tag: 'Home',
 	// 	note: 'This is a note'
 	// })
 	newUser.name = ''
-	newUser.state = '未激活'
+	newUser.state = '未启用'
 	newUser.note = ''
 	newUser.password = ''
 	newUser.confirmPassword = ''

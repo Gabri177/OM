@@ -48,8 +48,8 @@
   // 状态列表
   //{ label: "已过期", color: "red", type: "danger" },
   const statuses = [
-	{ label: "已激活", color: "green", type: "success" },
-	{ label: "未激活", color: "blue", type: "info" }
+	{ label: "启用", color: "green", type: "success" },
+	{ label: "未启用", color: "blue", type: "info" }
   ];
   
   // 当前状态
