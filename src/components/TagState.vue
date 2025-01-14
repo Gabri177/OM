@@ -82,8 +82,6 @@
 	popOut('提示', '你确定要切换状态吗？', '确认', '取消')
 	.then(() => {
 		emit("change", {before: currentStatus.value , after: status.label});
-		currentStatus.value = status.label;
-		tagType.value = status.type;
 		showCard.value = false;
 	})
 	.catch(() => {
@@ -100,15 +98,7 @@
 
   const emit = defineEmits(["change"]);
   
-  // 监听初始状态变化（可选，如果父组件动态更新初始状态）
-  watch(
-  () => props.initialState,
-  (newVal) => {
-    currentStatus.value = newVal;
-    tagType.value = statuses.find((status) => status.label === newVal)?.type || "info";
-  },
-  { immediate: true } // 确保初始化时也会触发
-);
+
 
   
   // 生命周期钩子

@@ -80,11 +80,7 @@
 											</div>
 										</div>
 									</div>
-									<span class="block font-bold mb-2">编辑备注:</span>
-									<div>
-										<el-input type="textarea" rows="3" placeholder="Please input your remarks"
-											v-model="selectedRow.note" />
-									</div>
+									
 								</DiaLog>
 							</template>
 
@@ -158,7 +154,7 @@ import { ElButton } from 'element-plus'
 import { toast, popOut } from '~/composables/util'
 import { logout } from '~/api/auth'
 import { useRouter } from 'vue-router'
-import { addTenant, banTenant, getTenants, expandTenant } from '~/api/tenants'
+import { addTenant, updateTenant, getTenants } from '~/api/tenants'
 import { removeToken } from '~/composables/auth'
 
 
@@ -176,7 +172,6 @@ const newUser = reactive({
 	name: '',
 	state: '未激活',
 	expireDate: '',
-	note: '',
 	password: '',
 	confirmPassword: ''
 })
@@ -193,7 +188,6 @@ const getData = () => {
 					name: data.userName,
 					state: data.isEnable ? '已激活' : '未激活',
 					expireDate: dayjs(data.expire).format('YYYY-MM-DD'),
-					note: 'This is a note',
 					password: data.password,
 					remainingDays: data.daysOfExpire,
 					id: data.tenantId,
@@ -210,58 +204,18 @@ const getData = () => {
 getData()
 
 
-const tableData2 = reactive([
-	{
-		id: 1,
-		activeDate: '2016-05-03',
-		name: 'Tom1',
-		state: '已激活',
-		expireDate: '2016-05-01',
-		note: 'This is a note',
-		password: '123',
-		remainingDays: 0
-	},
-	{
-		id: 2,
-		activeDate: '2016-05-02',
-		name: 'Tom2',
-		state: '未激活',
-		expireDate: '2017-05-02',
-		note: 'This is a note',
-		password: '123',
-		remainingDays: 0
-	},
-	{
-		id: 3,
-		activeDate: '2016-05-04',
-		name: 'Tom3',
-		state: '未激活',
-		expireDate: '2017-05-03',
-		note: 'This is a note',
-		password: '123',
-		remainingDays: 0
-	}
-]);
-
-// function initializeRemainingDays() {
-
-// 	//应该有一个getData方法 从后端获取数据
-// 	tableData.forEach((row) => {
-// 		row.remainingDays = calculateDays(row.expireDate)
-// 	});
-// }
-
-// initializeRemainingDays();
-
 const filteredTableData = computed(() => {
 	// 如果没有搜索关键字，返回全部数据
 	if (!searchInput.value) return tableData;
+
 	return tableData.filter((item) =>
 		Object.values(item).some(value =>
+			(value !== null && value !== undefined) && 
 			value.toString().toLowerCase().includes(searchInput.value.toLowerCase())
 		)
 	);
 });
+
 
 const handleAddConfirm = () => {
 
@@ -314,9 +268,11 @@ const handleEditConfirm = () => {
 	// console.log('rowId: ', row.id)
 	// console.log('newExpie: ', dayjs(dateRef.value).format('YYYY-MM-DD'))
 	
-	expandTenant({
-		tenantId: selectedRow.value.id,
-		NewExpire: dayjs(dateRef.value).format('YYYY-MM-DD')
+	updateTenant({
+		TenantId: selectedRow.value.id,
+		IsEnable: selectedRow.value.state === '已激活' ? true : false,
+		Password: newUser.password == '' ? selectedRow.value.password : newUser.password,
+		Expire: dayjs(dateRef.value).format('YYYY-MM-DD')
 	})
 	.then(() => {
 		toast('成功', '修改成功')
@@ -366,18 +322,22 @@ const handleEditDelete = () => {
 const handleStateChange = (row, data) => {
 	const {before, after} = data
 	const isEnable = after == '已激活' ? true : false
-	if (!isEnable){
-		banTenant(row.id)
-		.then(() => {
-			toast('成功', '禁用成功')
-			getData()
-		})
-		.catch((error) => {
-			toast('错误', '禁用失败', 'error')
-			getData()
-		})
-	}
-	getData()
+
+	updateTenant({
+		tenantId: row.id,
+		isEnable: isEnable,
+		Password: row.password,
+		Expire: row.expireDate
+	})
+	.then(() => {
+		toast('成功', '状态修改成功')
+		getData()
+	})
+	.catch((error) => {
+		toast('错误', '状态修改失败', 'error')
+		getData()
+	})
+
 	console.log('newtableData', tableData)
 }
 
