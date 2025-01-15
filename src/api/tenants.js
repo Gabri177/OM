@@ -10,7 +10,7 @@ export function addTenant(data) {
 // }
 
 export function getTenants() {
-	return axios.get('/tenants/index')
+	return axios.get('/tenants/index?PageSize=1000')
 }
 
 // export function expandTenant(data){
