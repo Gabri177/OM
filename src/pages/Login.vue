@@ -112,7 +112,7 @@ const handleLogin = () => {
 		.then((res) => {
 			console.log('登录成功');
 			console.log('login token: ', res.token);
-			setToken(res.token)
+			setToken(res.token, res.expires)
 			toast('成功', '登录成功');
 			router.push('/home');
 		})
